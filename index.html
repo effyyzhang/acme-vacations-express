@@ -1,0 +1,145 @@
+<html>
+  <head>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js'></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src='https://momentjs.com/downloads/moment.js'></script>
+<style>
+body {
+  font-family: sans-serif;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  border: solid 1px black;
+}
+input, button {
+  height: 2rem;
+  font-size: 1.25rem;
+  margin: 0.5rem;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  border-bottom: solid 1px black;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.error {
+  color: red;
+  margin: 1rem;
+}
+
+.destroy {
+  background-color: tomato;
+  color: white;
+}
+</style>
+
+  </head>
+  <body>
+    <div id='root'></div>
+  <script type='text/babel'>
+    const { render } = ReactDOM;
+    const { Component } = React;
+
+    class App extends Component{
+      constructor(){
+        super();
+        this.state = {
+          user: {},
+          vacations: [],
+          error: '',
+          startDate: moment().add(1, 'week').format('MM/DD/YYYY'),
+          endDate: moment().add(2, 'weeks').format('MM/DD/YYYY'),
+        };
+        this.onChange = this.onChange.bind(this);
+        this.create = this.create.bind(this);
+        this.destroy = this.destroy.bind(this);
+      }
+      async destroy(vacation){
+        this.setState({ error: '' });
+        const { user } = this.state
+        try {
+          await axios.delete(`http://localhost:3000/api/vacations/${vacation.id}`);
+          this.setState({ vacations: this.state.vacations.filter(_vacation => _vacation.id !== vacation.id) });
+        }
+        catch(ex){
+          this.setState({ error: ex.response.data.message });
+        };
+      }
+      async create(){
+        this.setState({ error: '' });
+        const { startDate, endDate, user } = this.state
+        try {
+          const vacation = (await axios.post(`http://localhost:3000/api/vacations`, { startDate, endDate })).data;
+          this.setState({ vacations: [...this.state.vacations, vacation ] });
+        }
+        catch(ex){
+          this.setState({ error: ex.response.data.message });
+        };
+
+      }
+      onChange(ev){
+        this.setState({ [ev.target.name]: ev.target.value });
+      }
+      async componentDidMount(){
+        const vacations = (await axios.get('http://localhost:3000/api/vacations')).data; 
+        this.setState({ vacations })
+      }
+      render(){
+        const { error, vacations, startDate, endDate } = this.state;
+        const { onChange, create, destroy } = this;
+        return (
+          <div>
+            <h1>Acme Vacation Planner</h1>
+            <form onSubmit={ ev => ev.preventDefault() }>
+              <input name='startDate' value={ startDate } onChange={ onChange }/>
+              <input name='endDate' value={ endDate } onChange={ onChange }/>
+              <button onClick={ create }>Create Vacation</button>
+              <div className='error'>{ error }</div>
+            </form>
+            <ul>
+              {
+                vacations.map( vacation => (
+                  <li key={ vacation.id }>
+                    <div>
+                    {
+                      moment(vacation.startDate).format('dddd MM/DD/YYYY')
+                    }
+                    </div>
+                    <div>
+                    to
+                    </div>
+                    <div>
+                    {
+                      moment(vacation.endDate).format('dddd MM/DD/YYYY')
+                    }
+                    </div>
+                    {
+                      `${moment(vacation.endDate).diff(moment(vacation.startDate), 'days')} Days`
+                    }
+                    <button className='destroy' onClick={ ()=> destroy(vacation)}>Remove</button>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        );
+      }
+    }
+    const root = document.querySelector('#root');
+    render(<App />, root);
+
+  </script>
+  </body>
+</html>
