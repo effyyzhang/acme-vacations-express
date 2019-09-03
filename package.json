@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/effyyzhang/acme-vacations-express/issues"
   },
-  "homepage": "https://github.com/effyyzhang/acme-vacations-express#readme"
+  "homepage": "https://github.com/effyyzhang/acme-vacations-express#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }

@@ -1,6 +1,5 @@
 const fs = require('fs');
 
-
 module.exports = (FILE, validator) => {
   const writeJSON = (data)=> {
     return new Promise((resolve, reject)=> {
